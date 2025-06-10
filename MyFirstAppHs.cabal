@@ -64,7 +64,7 @@ executable MyFirstAppHs
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends: base >=4.16 && <4.17, gtk >=3.0 && <3.1
+    build-depends:    base ^>=4.19.2.0, gi-gtk == 3.0.*, text, gi-glib, haskell-gi-base
 
     -- Directories containing source files.
     hs-source-dirs:   app
