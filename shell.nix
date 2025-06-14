@@ -23,7 +23,7 @@ pkgs.mkShell {
 	pkgs.lerc
 	pkgs.glib
 
-#gtk3
+	#gtk3
 	pkgs.libxkbcommon
 	pkgs.libepoxy
 	pkgs.xorg.libXtst
