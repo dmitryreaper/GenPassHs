@@ -1,55 +1,54 @@
-{-# LANGUAGE OverloadedStrings, OverloadedLabels #-}
+{-# LANGUAGE OverloadedStrings, OverloadedLabels, ImplicitParams,
+PackageImports #-}
+
+import Control.Monad (void)
+import System.Environment (getArgs, getProgName)
+
+import Data.Int (Int32)
+
 import qualified GI.Gtk as Gtk
+-- We import Application explicitly to test imports from the
+-- backwards-compatibility wrapper gi-gtk. In general it would be
+-- simpler to use Gtk.Application directly.
+import "gi-gtk" GI.Gtk.Objects.Application (Application(..))
 import Data.GI.Base
-import Data.IORef
-import Control.Monad.IO.Class (liftIO)
+
+-- | An example of a signal callback accessing the ?self parameter
+-- (that is, the object raising the callback). See
+-- https://github.com/haskell-gi/haskell-gi/issues/346
+-- for why this is necessary when dealing with even controllers in gtk4.
+pressedCB :: (?self :: Gtk.GestureClick) => Int32 -> Double -> Double -> IO ()
+pressedCB nPress x y = do
+    button <- #getCurrentButton ?self
+    putStrLn $ "Button pressed: " <> show nPress <> " "
+      <> show x <> " " <> show y <> " button: " <> show button
+
+activate :: Gtk.Application -> IO ()
+activate app = do
+  box <- new Gtk.Box [#orientation := Gtk.OrientationVertical]
+
+  adjustment <- new Gtk.Adjustment [#value := 50, #lower := 0, #upper := 100,
+                                    #stepIncrement := 1]
+  slider <- new Gtk.Scale[#adjustment := adjustment, #drawValue := True]
+  #append box slider
+  spinButton <- new Gtk.SpinButton [#adjustment := adjustment]
+  #append box spinButton
+
+  controller <- new Gtk.GestureClick [After #pressed pressedCB]
+  #addController slider controller
+
+  window <- new Gtk.ApplicationWindow [#application := app,
+                                       #title := "Hello",
+                                       #child := box]
+  #show window
 
 main :: IO ()
 main = do
-  -- Инициализация GTK
-  Gtk.init Nothing
+  app <- new Application [#applicationId := "haskell-gi.Gtk4.test",
+                          On #activate (activate ?self)]
 
-  -- Создание окна
-  win <- new Gtk.Window [ #title := "First app" ]
-  on win #destroy Gtk.mainQuit
-
-  -- Создание контейнера (вертикального Box)
-  box <- new Gtk.Box [ #orientation := Gtk.OrientationVertical, #spacing := 5 ]
-
-  labelHello <- new Gtk.Label [ #label := "Привет от Haskell!" ]
-
-
-  -- Первая кнопка
-  button <- new Gtk.Button [ #label := "Нажми сюда" ]
-  on button #clicked $ set button [ #label := "Спасибо за нажатие" ]
-
-  -- Вторая кнопка
-  buttona <- new Gtk.Button [ #label := "Button" ]
-  on buttona #clicked $ set buttona [ #label := "Спасибо за нажатие" ]
-
-  -- === Метка 2: Счётчик нажатий ===
-  clickCountRef <- newIORef (0 :: Int)
-  labelCounter <- new Gtk.Label [ #label := "Количество нажатий: 0" ]
-
-  let updateCounter = do
-        modifyIORef' clickCountRef (+1)
-        count <- readIORef clickCountRef
-        set labelCounter [ #label := "Количество нажатий: "]
-  
-  on button #clicked updateCounter
-  on buttona #clicked updateCounter
-
-  -- Добавляем кнопки в контейнер
-  #add box labelCounter
-  #add box labelHello  
-  #add box button
-  #add box buttona
-
-  -- Добавляем контейнер в окно
-  #add win box
-
-  -- Отображаем все элементы
-  Gtk.widgetShowAll win
-
-  -- Запуск главного цикла GTK
-  Gtk.main
+  -- If the application does not need to parse command line arguments
+  -- just pass Nothing.
+  args <- getArgs
+  progName <- getProgName
+  void $ #run app (Just $ progName : args)
