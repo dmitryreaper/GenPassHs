@@ -4,7 +4,7 @@ pkgs.mkShell {
   buildInputs = [
     pkgs.haskellPackages.ghc
     pkgs.haskellPackages.cabal-install
-    pkgs.gtk4              # Или pkgs.gtk4, если хочешь использовать GTK 4
+    pkgs.gtk4
     pkgs.gobject-introspection
     pkgs.haskellPackages.gi-gtk
 	pkgs.pkg-config
@@ -19,8 +19,10 @@ pkgs.mkShell {
 	pkgs.libthai
     pkgs.libxml2
 	pkgs.libdatrie
+	pkgs.libadwaita
 	pkgs.libsysprof-capture
 	pkgs.lerc
+	pkgs.appstream
 	pkgs.glib
 
 	#gtk3
