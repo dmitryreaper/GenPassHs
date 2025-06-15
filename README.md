@@ -1,1 +1,1 @@
-# MyFirstAppHs
+# Password generator written in haskell
